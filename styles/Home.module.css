@@ -1,0 +1,27 @@
+.container {
+  min-height: 100vh;
+  max-width: 80%;
+  margin: 0 auto;
+  padding: 10px;
+}
+
+.book_item {
+  margin-top: 5px;
+  margin-bottom: 5px;
+}
+
+.input {
+  display: block;
+  margin-top: 5px;
+  margin-bottom: 5px;
+}
+
+.submitButton {
+  margin-top: 10px;
+  margin-bottom: 20px;
+}
+
+.error {
+  color: red;
+  font-size: 12px;
+}

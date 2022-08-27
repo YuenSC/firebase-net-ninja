@@ -7,6 +7,7 @@ import { collection, getDocs, getFirestore } from "firebase/firestore";
 
 // Your web app's Firebase configuration
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+
 const firebaseConfig = {
   apiKey: "AIzaSyAdFjap7sk2Kv6itKTbMQnfTh9UQ7ucbGU",
   authDomain: "myproject-32b53.firebaseapp.com",
@@ -19,17 +20,7 @@ const firebaseConfig = {
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
 
 const db = getFirestore();
-const collectionRef = collection(db, "books");
-getDocs(collectionRef)
-  .then((snapshot) => {
-    let books = [];
-    snapshot.docs.forEach((doc) => {
-      books.push({ ...doc.data(), id: doc.id });
-    });
-  })
-  .catch((error) => {
-    console.log("error :>> ", error);
-  });
+
+export default db;

@@ -1,11 +1,18 @@
+import { async } from "@firebase/util";
 import { FormikErrors, useFormik } from "formik";
 import type { GetStaticPaths, GetStaticProps, NextPage } from "next";
 import Head from "next/head";
 import Image from "next/image";
+import { useCallback, useEffect, useState } from "react";
 
 import styles from "../styles/Home.module.css";
 import { Book } from "../type";
-import { getBooks } from "../util/firebaseAction";
+import {
+  addBook,
+  deleteBook,
+  getBooks,
+  subscriptBookSnapshot,
+} from "../util/firebaseAction";
 
 interface HomeDataType {
   books: Book[];
@@ -16,8 +23,9 @@ interface FormValues {
   author: string;
 }
 
-const Home: NextPage<HomeDataType> = ({ books }) => {
-  console.log("books", books);
+const Home: NextPage<HomeDataType> = ({ books: fallbackBook }) => {
+  const [books, setBooks] = useState(fallbackBook);
+
   const formik = useFormik<FormValues>({
     initialValues: {
       title: "",
@@ -31,10 +39,30 @@ const Home: NextPage<HomeDataType> = ({ books }) => {
 
       return error;
     },
-    onSubmit: (values) => {
-      alert(JSON.stringify(values, null, 2));
+    onSubmit: async (values, { resetForm, setSubmitting }) => {
+      try {
+        await addBook(values);
+        resetForm();
+        setSubmitting(false);
+      } catch (error) {}
     },
   });
+
+  const handleBookDelete = useCallback(async (id: string) => {
+    try {
+      await deleteBook(id);
+      setBooks((prev) => prev.filter((book) => book.id !== id));
+    } catch (error) {
+      console.error(error);
+    }
+  }, []);
+
+  useEffect(() => {
+    const unsubscriptBookSnapshot = subscriptBookSnapshot((books) =>
+      setBooks(books)
+    );
+    return unsubscriptBookSnapshot;
+  }, []);
 
   return (
     <div className={styles.container}>
@@ -46,6 +74,7 @@ const Home: NextPage<HomeDataType> = ({ books }) => {
           placeholder="Title"
           onChange={formik.handleChange}
           value={formik.values.title}
+          disabled={formik.isSubmitting}
         />
         <div className={styles.error}>{formik.errors.title}</div>
         <input
@@ -55,17 +84,32 @@ const Home: NextPage<HomeDataType> = ({ books }) => {
           placeholder="Author"
           onChange={formik.handleChange}
           value={formik.values.author}
+          disabled={formik.isSubmitting}
         />
         <div className={styles.error}>{formik.errors.author}</div>
-        <button className={styles.submitButton} type="submit">
+        <button
+          disabled={formik.isSubmitting}
+          className={styles.submitButton}
+          type="submit"
+        >
           Submit
         </button>
       </form>
 
       <div>Book List</div>
       {books.map((book) => (
-        <div key={book.id} className={styles.book_item}>
-          Title : {book.title}, Author: {book.author}
+        <div key={book.id} className={styles.book_row}>
+          <div className={styles.book_item}>
+            Title : {book.title}, Author: {book.author}
+          </div>
+          <button
+            onClick={() => handleBookDelete(book.id)}
+            style={{
+              height: "fit-content",
+            }}
+          >
+            X
+          </button>
         </div>
       ))}
     </div>
@@ -81,5 +125,6 @@ export const getStaticProps: GetStaticProps<HomeDataType> = async () => {
     props: {
       books,
     },
+    revalidate: 1,
   };
 };
